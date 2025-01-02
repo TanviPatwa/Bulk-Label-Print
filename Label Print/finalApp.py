@@ -124,7 +124,7 @@ class Ui_MainWindow(object):
         self.printButton.setGeometry(QtCore.QRect(440, 520, 151, 51))
         font = QtGui.QFont()
         font.setPointSize(12)
-        self.printButton.clicked.connect(self.generateQR)
+        self.printButton.clicked.connect(self.showLabel)
         self.printButton.setFont(font)
         self.printButton.setObjectName("printButton")
         self.printButton.setAutoDefault(True)
@@ -513,59 +513,59 @@ class Ui_MainWindow(object):
         url = pyqrcode.create(number)
         url.png('new_code1.png')  # Save the QR code as a PNG file
         print("QR Code generated: new_code1.png")
-        self.makeLabel()
 
-    def makeLabel(self):
+    def makeLabel(self, label, width, height, obj):
+        """
+        Modify the makeLabel method to handle additional arguments for drawing the label.
+        """
         base_path = os.path.dirname(__file__)
         specs = labels.Specification(55, 41, 1, 1, 50, 36, corner_radius=2)
+        
+        # Register fonts
         registerFont(TTFont('Sans Bold', os.path.join(base_path, 'OpenSans-Bold.ttf')))
         registerFont(TTFont('Sans Regular', os.path.join(base_path, 'OpenSans-Regular.ttf')))
-        itemName=self.itemName.text()
-        mrp=self.mrp.text()
-        qty=self.quantity.text()
-        type=self.type.currentText()
-        from datetime import date 
+        
+        # Extract product details from the provided object (obj)
+        itemName = obj['itemName']
+        mrp = obj['mrp']
+        qty = obj['quantity']
+        type = obj['type']
+        from datetime import date
         today = date.today()
         tdate = today.strftime("%b-%y")
-        remark=self.remark.text()
-        vehicle=self.vehicle.text()
+        remark = obj['remark']
+        vehicle = obj['vehicle']
         
+        # Function to write the label's contents
         def write_name(label, width, height, name):
-            label.add(shapes.Image(80,height-40,width-90,40,os.path.join(base_path, "new_code1.png")))
-            label.add(shapes.String(5,height-30,self.code1.text().upper(),fontSize=9,fontName='Sans Regular'))
-            label.add(shapes.String(5,height-46,itemName,fontSize=10,fontName='Sans Bold'))
-            label.add(shapes.String(5,height-57,'MRP - '+mrp+'/-    Qty - '+qty+'  '+type,fontSize=10,fontName='Sans Bold'))
-            label.add(shapes.String(5,height-68,'VH: '+vehicle,fontSize=9,fontName='Sans Bold'))
-            label.add(shapes.String(5,height-76,'CC - 0202507823 , uvpune201@gmail.com',fontSize=6,fontName='Sans Regular'))
-            label.add(shapes.String(5,height-84,'Pkd by - B.C. Traders Village Urli Devachi',fontSize=6,fontName='Sans Regular'))
-            label.add(shapes.String(5,height-92,'NR SonaiGarden Pune, 412308. Pkd Date:'+tdate,fontSize=6,fontName='Sans Regular'))
-            label.add(shapes.String(5,height-101.5,self.remark.text(),fontSize=10,fontName='Sans Bold'))
-    
-        sheet = labels.Sheet(specs, write_name, border=False)
-        sheet.add_labels(i for i in range(1))
-        sheet.save('nametags.pdf')
-        os.system("nametags.pdf")   
+            label.add(shapes.Image(80, height - 40, width - 90, 40, os.path.join(base_path, "new_code1.png")))
+            label.add(shapes.String(5, height - 30, self.code1.text().upper(), fontSize=9, fontName='Sans Regular'))
+            label.add(shapes.String(5, height - 46, itemName, fontSize=10, fontName='Sans Bold'))
+            label.add(shapes.String(5, height - 57, 'MRP - ' + mrp + '/-    Qty - ' + qty + '  ' + type, fontSize=10, fontName='Sans Bold'))
+            label.add(shapes.String(5, height - 68, 'VH: ' + vehicle, fontSize=9, fontName='Sans Bold'))
+            label.add(shapes.String(5, height - 76, 'CC - 0202507823 , uvpune201@gmail.com', fontSize=6, fontName='Sans Regular'))
+            label.add(shapes.String(5, height - 84, 'Pkd by - B.C. Traders Village Urli Devachi', fontSize=6, fontName='Sans Regular'))
+            label.add(shapes.String(5, height - 92, 'NR SonaiGarden Pune, 412308. Pkd Date:' + tdate, fontSize=6, fontName='Sans Regular'))
+            label.add(shapes.String(5, height - 101.5, remark, fontSize=10, fontName='Sans Bold'))
+        
+        # Use the write_name function to generate the label
+        write_name(label, width, height, obj)
+
+    def showLabel(self):
+        self.generateQR()
+        base_path = os.path.dirname(__file__)
+        specs = labels.Specification(55, 41, 1, 1, 50, 36, corner_radius=2)
+        sheet = labels.Sheet(specs, self.makeLabel, border=False)
+        os.system('nametags.pdf')
 
     def bulkprinting(self, orders):
         """
         Generate a single PDF with labels for all products in the orders.
         Each product's label is repeated based on its quantity.
         """
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.pagesizes import letter
-
-        # Setup PDF
-        pdf_file = "bulk_labels.pdf"
-        c = canvas.Canvas(pdf_file, pagesize=letter)
-        page_width, page_height = letter
-
-        # Define label dimensions and positioning
-        label_width = 200
-        label_height = 100
-        x_offset = 20
-        y_offset = page_height - label_height - 20
-        horizontal_spacing = 220
-        vertical_spacing = 120
+        base_path = os.path.dirname(__file__)
+        specs = labels.Specification(55, 41, 1, 1, 50, 36, corner_radius=2)
+        sheet = labels.Sheet(specs, self.makeLabel, border=False)
 
         # Iterate through the orders
         for order in orders:
@@ -578,36 +578,32 @@ class Ui_MainWindow(object):
 
             # Set the product details
             self.code1.setText(code1)
-            self.Search()
+            self.Search()  # Assuming this method updates other relevant fields
 
             # Generate QR code
-            self.generateQR()
-            qr_code_path = os.path.join(os.path.dirname(__file__), "new_code1.png")
+            self.generateQR()  # Ensure the QR code is generated and saved as new_code1.png
 
-            # Generate labels based on quantity
-            for _ in range(quantity):
-                # Use the existing `makelabel` function
-                self.makeLabel(
-                    c, qr_code_path, self.code1.text().upper(), self.itemName.text(),
-                    self.mrp.text(), self.quantity.text(), self.vehicle.text(),
-                    self.remark.text(), x_offset, y_offset
-                )
-
-                # Update position for the next label
-                x_offset += label_width + horizontal_spacing
-                if x_offset + label_width > page_width:
-                    x_offset = 20
-                    y_offset -= label_height + vertical_spacing
-
-                # Start a new page if needed
-                if y_offset < label_height:
-                    c.showPage()
-                    x_offset = 20
-                    y_offset = page_height - label_height - 20
+            qr_code_path = os.path.join(base_path, "new_code1.png")
+            # Check if QR code exists
+            if os.path.exists(qr_code_path):
+                for _ in range(quantity):
+                    # Create a dictionary with the required order details for makeLabel
+                    label_data = {
+                        'itemName': self.itemName.text(),
+                        'mrp': self.mrp.text(),
+                        'quantity': self.quantity.text(),
+                        'type': self.type.currentText(),
+                        'remark': self.remark.text(),
+                        'vehicle': self.vehicle.text(),
+                        'code1': code1,
+                    }
+                    # Pass the data to add_labels
+                    sheet.add_labels([label_data])  # Pass the current order as the data for the label
 
         # Save the PDF
-        c.save()
-        print(f"Labels generated in {pdf_file}.")
+        sheet.save('bulk_labels.pdf')
+        print(f"Labels generated in bulk_labels.pdf.")
+        os.system('bulk_labels.pdf')
 
 
     def process_order_file(self):
