@@ -1,0 +1,5 @@
+[SeagateSoftwareDataSource]
+; Everything after this line is a Seagate Software Connection initstring
+MS16-17.MDB
+
+Directory=D:\edepostk\MS16-17.MDB;Datasource Type=File;

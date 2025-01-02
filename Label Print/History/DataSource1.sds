@@ -1,0 +1,5 @@
+[SeagateSoftwareDataSource]
+; Everything after this line is a Seagate Software Connection initstring
+MS19-20.mdb
+
+Directory=D:\edepostk\MS19-20.mdb;Datasource Type=File;
