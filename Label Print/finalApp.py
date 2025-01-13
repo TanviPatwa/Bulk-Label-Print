@@ -400,7 +400,8 @@ class Ui_MainWindow(object):
 
 
     def Search(self):
-        flg=0
+        global flg
+        flg = 0
         global data
         if(self.code1.text()!=""):
             regex = re.compile(f'^{self.code1.text().strip()}.*', re.IGNORECASE)
@@ -610,29 +611,30 @@ class Ui_MainWindow(object):
             self.code1.setText(code1)
             self.Search()  # Updates relevant fields like itemName, mrp, etc.
 
-            # Create label data
-            label_data = {
-                'code1': self.code1.text(),
-                'itemName': self.itemName.text(),
-                'mrp': self.mrp.text(),
-                'quantity': self.quantity.text(),
-                'type': self.type.currentText(),
-                'remark': self.remark.text(),
-                'vehicle': self.vehicle.text(),
-            }
+            if (flg==0): 
+                # Create label data
+                label_data = {
+                    'code1': self.code1.text(),
+                    'itemName': self.itemName.text(),
+                    'mrp': self.mrp.text(),
+                    'quantity': self.quantity.text(),
+                    'type': self.type.currentText(),
+                    'remark': self.remark.text(),
+                    'vehicle': self.vehicle.text(),
+                }
 
-            # Generate QR code for the current product
-            self.generateQR(label_data['code1'])  # Overwrites "new_code1.png"
-            qr_code_path = os.path.join(os.path.dirname(__file__), "new_code1.png")
+                # Generate QR code for the current product
+                self.generateQR(label_data['code1'])  # Overwrites "new_code1.png"
+                qr_code_path = os.path.join(os.path.dirname(__file__), "new_code1.png")
 
-            # Make a unique copy of the QR code image for this label
-            unique_qr_code_path = os.path.join(os.path.dirname(__file__), f"{code1}_qr.png")
-            shutil.copy(qr_code_path, unique_qr_code_path)
-            label_data['qr_code_path'] = unique_qr_code_path
+                # Make a unique copy of the QR code image for this label
+                unique_qr_code_path = os.path.join(os.path.dirname(__file__), f"{code1}_qr.png")
+                shutil.copy(qr_code_path, unique_qr_code_path)
+                label_data['qr_code_path'] = unique_qr_code_path
 
-            # Add labels for the current product based on its quantity
-            for _ in range(quantity):
-                sheet.add_label(label_data)
+                # Add labels for the current product based on its quantity
+                for _ in range(quantity):
+                    sheet.add_label(label_data)
 
         # Save the PDF
         sheet.save("bulk_labels.pdf")
