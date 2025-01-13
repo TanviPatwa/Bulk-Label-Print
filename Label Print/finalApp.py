@@ -627,10 +627,19 @@ class Ui_MainWindow(object):
                 self.generateQR(label_data['code1'])  # Overwrites "new_code1.png"
                 qr_code_path = os.path.join(os.path.dirname(__file__), "new_code1.png")
 
-                # Make a unique copy of the QR code image for this label
-                unique_qr_code_path = os.path.join(os.path.dirname(__file__), f"{code1}_qr.png")
-                shutil.copy(qr_code_path, unique_qr_code_path)
-                label_data['qr_code_path'] = unique_qr_code_path
+                safe_code1 = label_data['code1'].replace("/", "_")
+                unique_qr_code_path = os.path.join(os.path.dirname(__file__), f"{safe_code1}_qr.png")
+                
+                try:
+                    # Copy the generated QR code to a unique path
+                    if os.path.exists(qr_code_path):
+                        shutil.copy(qr_code_path, unique_qr_code_path)
+                        label_data['qr_code_path'] = unique_qr_code_path
+                        print(f"QR Code saved to: {unique_qr_code_path}")
+                    else:
+                        print("Error: 'new_code1.png' not found. QR code generation might have failed.")
+                except Exception as e:
+                    print(f"Error copying QR code: {e}")
 
                 # Add labels for the current product based on its quantity
                 for _ in range(quantity):
@@ -643,9 +652,16 @@ class Ui_MainWindow(object):
 
         # Clean up temporary QR code files
         for order in orders:
-            unique_qr_code_path = os.path.join(os.path.dirname(__file__), f"{order['Code1']}_qr.png")
-            if os.path.exists(unique_qr_code_path):
-                os.remove(unique_qr_code_path)
+            import glob
+            directory = os.path.dirname(__file__)
+            qr_files = glob.glob(os.path.join(directory, "*_qr.png"))
+            # Iterate through the files and remove them
+            for qr_file in qr_files:
+                try:
+                    os.remove(qr_file)
+                    print(f"Removed: {qr_file}")
+                except Exception as e:
+                    print(f"Error removing {qr_file}: {e}")
 
     def process_order_file(self):
         orders = []
