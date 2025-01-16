@@ -27,7 +27,6 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 import os
 
-
 data = pd.DataFrame()
 today = date.today()
 
@@ -399,17 +398,21 @@ class Ui_MainWindow(object):
         self.importOrderButton.setText(_translate("MainWindow", "Print Order List"))
 
 
-    def Search(self):
+    def Search(self,bulk=False):
         global flg
-        flg = 0
         global data
+        flg = 0
         if(self.code1.text()!=""):
             regex = re.compile(f'^{self.code1.text().strip()}.*', re.IGNORECASE)
             data = df[df['Code1'].str.match(regex)== True]
-            # print(data)
             if(len(data)>1):
-                self.searching()
-            elif len(data)==1:
+                if(bulk):
+                    regex = re.compile(f'{self.code1.text().strip()}', re.IGNORECASE)
+                    data = df[df['Code1'].str.match(regex)== True].head(1)
+                else:
+                    self.searching()
+                
+            if len(data)==1:
                 self.code1.setText(data['Code1'].values[0])
                 self.code2.setText(data['Code2'].values[0])
                 self.itemName.setText(data['Item'].values[0])
@@ -422,7 +425,6 @@ class Ui_MainWindow(object):
         elif(self.code2.text()!=""):
             regex = re.compile(f"^{self.code2.text().strip()}.*", re.IGNORECASE)
             data = df[df['Code2'].str.match(regex)== True]
-            # print(data)
             data.to_excel('cache.xlsx',index=False)
             if(len(data)>1):
                 self.searching()
@@ -513,7 +515,6 @@ class Ui_MainWindow(object):
         # Generate QR code and save it as an image
         url = pyqrcode.create(number)
         url.png('new_code1.png')  # Save the QR code as a PNG file
-        print("QR Code generated: new_code1.png")
 
     def makeLabel(self, obj):
         """
@@ -587,7 +588,6 @@ class Ui_MainWindow(object):
             # Register fonts
             registerFont(TTFont('Sans Bold', os.path.join(base_path, 'OpenSans-Bold.ttf')))
             registerFont(TTFont('Sans Regular', os.path.join(base_path, 'OpenSans-Regular.ttf')))
-
             # Add QR code image to the label
             label.add(shapes.Image(80, height - 50, 50, 50, obj['qr_code_path']))
             label.add(shapes.String(5, height - 45, obj['code1'].upper(), fontSize=9, fontName='Sans Regular'))
@@ -602,14 +602,14 @@ class Ui_MainWindow(object):
         for order in orders:
             code1 = order["Code1"]
             quantity = int(order["Quantity"])
-
+            
             # Skip products with quantity 0
             if quantity == 0:
                 continue
 
             # Set the product details
             self.code1.setText(code1)
-            self.Search()  # Updates relevant fields like itemName, mrp, etc.
+            self.Search(bulk=True)  # Updates relevant fields like itemName, mrp, etc.
 
             if (flg==0): 
                 # Create label data
@@ -635,7 +635,6 @@ class Ui_MainWindow(object):
                     if os.path.exists(qr_code_path):
                         shutil.copy(qr_code_path, unique_qr_code_path)
                         label_data['qr_code_path'] = unique_qr_code_path
-                        print(f"QR Code saved to: {unique_qr_code_path}")
                     else:
                         print("Error: 'new_code1.png' not found. QR code generation might have failed.")
                 except Exception as e:
@@ -644,6 +643,10 @@ class Ui_MainWindow(object):
                 # Add labels for the current product based on its quantity
                 for _ in range(quantity):
                     sheet.add_label(label_data)
+
+            else:
+                msgpopup(self,f"{code1} Product not found in the database.")
+                print(f"{code1} Product not found in the database.")
 
         # Save the PDF
         sheet.save("bulk_labels.pdf")
@@ -659,7 +662,6 @@ class Ui_MainWindow(object):
             for qr_file in qr_files:
                 try:
                     os.remove(qr_file)
-                    print(f"Removed: {qr_file}")
                 except Exception as e:
                     print(f"Error removing {qr_file}: {e}")
 
