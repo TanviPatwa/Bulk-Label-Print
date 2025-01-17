@@ -409,10 +409,17 @@ class Ui_MainWindow(object):
                 if(bulk):
                     regex = re.compile(f'{self.code1.text().strip()}', re.IGNORECASE)
                     data = df[df['Code1'].str.match(regex)== True].head(1)
+                    self.code1.setText(data['Code1'].values[0])
+                    self.code2.setText(data['Code2'].values[0])
+                    self.itemName.setText(data['Item'].values[0])
+                    self.vehicle.setText(data['Vehicle'].values[0])
+                    self.quantity.setText(str(data['Quantity'].values[0]))
+                    self.mrp.setText(str(data['M.R.P'].values[0]))
+                    self.remark.setText(str(data['Remark'].values[0]))
                 else:
                     self.searching()
                 
-            if len(data)==1:
+            elif len(data)==1:
                 self.code1.setText(data['Code1'].values[0])
                 self.code2.setText(data['Code2'].values[0])
                 self.itemName.setText(data['Item'].values[0])
