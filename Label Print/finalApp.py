@@ -402,9 +402,16 @@ class Ui_MainWindow(object):
         global flg
         global data
         flg = 0
-        if(self.code1.text()!=""):
-            regex = re.compile(f'^{self.code1.text().strip()}.*', re.IGNORECASE)
-            data = df[df['Code1'].str.match(regex)== True]
+        search_text = self.code1.text().strip().lower()  # Normalize input
+
+        if search_text:
+            # Clean both columns for safe comparison
+            code1_clean = df['Code1'].astype(str).str.strip().str.lower()
+            code2_clean = df['Code2'].astype(str).str.strip().str.lower()
+
+            # Perform partial match using .str.contains
+            mask = code1_clean.str.contains(search_text, na=False) | code2_clean.str.contains(search_text, na=False)
+            data = df[mask]
             if(len(data)>1):
                 if(bulk):
                     regex = re.compile(f'{self.code1.text().strip()}', re.IGNORECASE)
@@ -548,19 +555,15 @@ class Ui_MainWindow(object):
         
         # Function to write the label's contents
         def write_name(label, width, height, name):
-            qr_size = 12
-            qr_x = 38
-            qr_y = height - qr_size - 2 
-            label.add(shapes.Image(qr_x, qr_y, width=qr_size, height=qr_size, os.path.join(base_path, "new_code1.png")))
-            label.add(shapes.String(3, height - 4, 'Pkd Date: ' + tdate, fontSize=7, fontName='Sans Bold'))
-            label.add(shapes.String(3, height - 9, self.code1.text().upper(), fontSize=8, fontName='Sans Bold'))
-            label.add(shapes.String(3, height - 14, itemName, fontSize=9, fontName='Sans Bold'))
-            label.add(shapes.String(3, height - 19, 'MRP - ' + mrp + '/-  Qty - ' + qty + '  ' + type, fontSize=8, fontName='Sans Bold'))
-            label.add(shapes.String(3, height - 23.5, 'VH: ' + vehicle, fontSize=8, fontName='Sans Bold'))
-            label.add(shapes.String(3, height - 28, 'CC - 0202507823 , uvpune201@gmail.com', fontSize=7, fontName='Sans Regular'))
-            label.add(shapes.String(3, height - 32, 'Pkd by - B.C. Traders Village Urli Devachi', fontSize=7, fontName='Sans Regular'))
-            label.add(shapes.String(3, height - 36, 'NR SonaiGarden Pune, 412308.', fontSize=7, fontName='Sans Regular'))
-            label.add(shapes.String(3, height - 40, self.remark.text(), fontSize=8, fontName='Sans Bold'))
+            label.add(shapes.Image(80,height-40,width-90,40,os.path.join(base_path, "new_code1.png")))
+            label.add(shapes.String(3,height-30,self.code1.text().upper(),fontSize=9,fontName='Sans Bold'))
+            label.add(shapes.String(3,height-42,itemName,fontSize=7,fontName='Sans Bold'))
+            label.add(shapes.String(3,height-49,'MRP - '+mrp+'/-    Qty - '+qty+'  '+type,fontSize=6,fontName='Sans Bold'))
+            label.add(shapes.String(3,height-55,'VH: '+vehicle,fontSize=5,fontName='Sans Bold'))
+            label.add(shapes.String(3,height-60,'CC - 0202507823 , uvpune201@gmail.com',fontSize=5,fontName='Sans Regular'))
+            label.add(shapes.String(3,height-65,'Pkd by - B.C. Traders Village Urli Devachi NR Sonai Garden',fontSize=5,fontName='Sans Regular'))
+            label.add(shapes.String(3,height-70,'Pune 412308',fontSize=5,fontName='Sans Regular'))
+            label.add(shapes.String(3,height-20,'Date: '+tdate,fontSize=5,fontName='Sans Regular'))
         
         # Use the write_name function to generate the label
         # write_name(label, width, height, obj)
@@ -600,16 +603,11 @@ class Ui_MainWindow(object):
             registerFont(TTFont('Sans Bold', os.path.join(base_path, 'OpenSans-Bold.ttf')))
             registerFont(TTFont('Sans Regular', os.path.join(base_path, 'OpenSans-Regular.ttf')))
             # Add QR code image to the label
-            qr_size = 12 
-            qr_x = 38  
-            qr_y = height - qr_size - 2  
-            label.add(shapes.Image(qr_x, qr_y, width=qr_size, height=qr_size, obj['qr_code_path']))
-            label.add(shapes.String(5, height - 4, 'Pkd Date: ' + obj['tdate'], fontSize=7, fontName='Sans Bold'))
-            label.add(shapes.String(5, height - 9, obj['code1'].upper(), fontSize=9, fontName='Sans Regular'))
-            label.add(shapes.String(5, height - 16, obj['itemName'], fontSize=10, fontName='Sans Bold'))
-            label.add(shapes.String(5, height - 22, 'Qty: ' + obj['quantity'] + '  ' + obj['type'], fontSize=10, fontName='Sans Bold'))
-            label.add(shapes.String(5, height - 28, 'VH: ' + obj['vehicle'], fontSize=10, fontName='Sans Bold'))
-
+            label.add(shapes.Image(85, height - 40, 45, 45, obj['qr_code_path']))
+            label.add(shapes.String(3, height - 30, obj['code1'].upper(), fontSize=9, fontName='Sans Regular'))
+            label.add(shapes.String(3, height - 44, obj['itemName'], fontSize=9.5, fontName='Sans Bold'))
+            label.add(shapes.String(3, height - 54, 'Qty: ' + obj['quantity'] + '  ' + obj['type'], fontSize=10, fontName='Sans Bold'))
+            label.add(shapes.String(3, height - 65, 'VH: ' + obj['vehicle'], fontSize=10, fontName='Sans Bold'))
 
         # Initialize the labels sheet
         sheet = labels.Sheet(specs, make_label, border=False)
